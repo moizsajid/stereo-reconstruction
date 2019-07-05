@@ -1,0 +1,3 @@
+/home/moizsajid/Repositories/stereo-reconstruction/CMakeFiles/rebuild_cache.dir
+/home/moizsajid/Repositories/stereo-reconstruction/CMakeFiles/edit_cache.dir
+/home/moizsajid/Repositories/stereo-reconstruction/CMakeFiles/DisplayImage.dir
