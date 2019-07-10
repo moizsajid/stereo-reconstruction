@@ -206,6 +206,9 @@ DisplayImage_BINARY_DIR:STATIC=/home/moizsajid/Repositories/stereo-reconstructio
 //Value Computed by CMake
 DisplayImage_SOURCE_DIR:STATIC=/home/moizsajid/Repositories/stereo-reconstruction
 
+//The directory containing a CMake configuration file for Eigen3.
+Eigen3_DIR:PATH=/usr/local/share/eigen3/cmake
+
 //No help, variable specified on the command line.
 OPENCV_EXTRA_MODULES_PATH:UNINITIALIZED=/home/moizsajid/opencv_contrib/modules
 
