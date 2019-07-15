@@ -95,10 +95,10 @@ int main( int argc, char* argv[] )
 	
 	// set range to search from current pixel
 	// int disparity_to_left = -64, disparity_to_right = 0;
-	int disparity_to_left = -128, disparity_to_right = 0;
+	int disparity_to_left = -64, disparity_to_right = 0;
 	int disparity_range = disparity_to_right - disparity_to_left;
 	// int half_block_size = 21;
-	int half_block_size = 10;
+	int half_block_size = 21;
 
 	int row_right, col_right;
 	int row_start, row_end;
@@ -186,23 +186,23 @@ int main( int argc, char* argv[] )
     std::vector<Point3d> colors;
     std::vector<Point3d> faces;
 
-    double focal_length = 3979.911;
-    // double focal_length = 413.69216919;  // web cam
+    // double focal_length = 3979.911;
+    double focal_length = 413.69216919;  // web cam
     // double focal_length = 489.6895905;  // web cam
     // double focal_length = 594.95166016;  // web cam
-    double baseline = 193.001;
-    // double baseline = 5.7; //web cam
+    // double baseline = 193.001;
+    double baseline = 5.7; //web cam
 
     Eigen::MatrixXd intrinsics(3, 3);
 
-    intrinsics << 3979.911, 0.0, 1244.772,
-                  0.0, 3979.911, 1019.507,
-                  0.0, 0.0, 1.0;
-
-    // web cam intrinsics
-    // intrinsics << 413.69216919, 0.0, 369.60504179,
-    //               0.0, 482.78549194, 242.59775176,
+    // intrinsics << 3979.911, 0.0, 1244.772,
+    //               0.0, 3979.911, 1019.507,
     //               0.0, 0.0, 1.0;
+
+    // // web cam intrinsics
+    intrinsics << 413.69216919, 0.0, 369.60504179,
+                  0.0, 482.78549194, 242.59775176,
+                  0.0, 0.0, 1.0;
     // intrinsics << 594.95166016, 0.0, 319.80993603,
     //               0.0, 594.95166016, 234.68265936,
     //               0.0, 0.0, 1.0;
@@ -210,20 +210,20 @@ int main( int argc, char* argv[] )
 
     Eigen::MatrixXd intrinsics2(3, 3);
 
-    intrinsics2 << 3979.911, 0.0, 1369.115,
-                  0.0, 3979.911, 1019.507,
-                  0.0, 0.0, 1.0;
-
-    // web cam intrinsics
-    // intrinsics2 << 565.68701172, 0.0, 319.80993603,
-    //               0.0, 594.95166016, 234.68265936,
+    // intrinsics2 << 3979.911, 0.0, 1369.115,
+    //               0.0, 3979.911, 1019.507,
     //               0.0, 0.0, 1.0;
+
+    // // web cam intrinsics
+    intrinsics2 << 565.68701172, 0.0, 319.80993603,
+                  0.0, 594.95166016, 234.68265936,
+                  0.0, 0.0, 1.0;
     // intrinsics2 << 594.95166016, 0.0, 319.80993603,
     //               0.0, 594.95166016, 234.68265936,
     //               0.0, 0.0, 1.0;
 
-    double edgeThreshold = 10;
-    // double edgeThreshold = 200;
+    // double edgeThreshold = 10;
+    double edgeThreshold = 200;
 
     double Q03 = -intrinsics(0, 2);
     double Q13 = -intrinsics(1, 2);
