@@ -25,6 +25,16 @@ const char* keys =
     "{ input1 | ../data/box.png          | Path to input image 1. }"
     "{ input2 | ../data/box_in_scene.png | Path to input image 2. }";
 
+
+inline int square(int x){ return x*x; }
+
+inline cv::Mat getBlock(cv::Mat& matrix, const int row_start, const int row_end, const int col_start, const int col_end) 
+{
+	cv::Mat block = matrix.rowRange(row_start, row_end).colRange(col_start, col_end); 
+	// cv::Mat block = matrix.rowRange(0, 20).colRange(10, 0); 
+	return block;
+}
+
 int main( int argc, char* argv[] )
 {
     printf("%u.%u.%u\r\n", CV_MAJOR_VERSION, CV_MINOR_VERSION, CV_SUBMINOR_VERSION);
@@ -40,89 +50,135 @@ int main( int argc, char* argv[] )
         parser.printMessage();
         return -1;
     }
-
-    //resize(img1, img1, cv::Size(), 0.2, 0.2);
-    //resize(img2, img2, cv::Size(), 0.2, 0.2);
-    
-    //normalize(img1, img1, 0, 255, NORM_MINMAX, CV_8UC1);
-    //normalize(img2, img2, 0, 255, NORM_MINMAX, CV_8UC1);
+    resize(img1_color, img1_color, cv::Size(), 0.2, 0.2);
+    resize(img2_color, img2_color, cv::Size(), 0.2, 0.2);
 
     Mat img1, img2, disp;
 
     cvtColor(img1_color, img1, COLOR_BGR2GRAY);
     cvtColor(img2_color, img2, COLOR_BGR2GRAY);
 
-    //Ptr<StereoBM> stereo = StereoBM::create(16, 15);
-    Ptr<StereoBM> stereo = StereoBM::create(256, 21);
+    cv::Mat left_image = img1;
+    cv::Mat right_image = img2;
+	int h = left_image.rows, w = left_image.cols, nchannels = left_image.channels();
 
-    stereo->compute(img1, img2, disp);
-
-    //normalize(disp, disp, 0, 255, NORM_MINMAX, CV_8UC1);
-    disp.convertTo(disp, CV_32F, 1.0 / 16.0);
-
-    // double min, max;
-    // minMaxLoc(img1, &min, &max);
-
-    // double min2, max2;
-    // minMaxLoc(img2, &min2, &max2);
 
     double min3, max3;
-    minMaxLoc(disp, &min3, &max3);
 
-    // cout << min << " " << max << endl;
-    // cout << min2 << " " << max2 << endl;
+    //Ptr<StereoBM> stereo = StereoBM::create(16, 15);
+ //    Ptr<StereoBM> stereo = StereoBM::create(256, 21);
+
+ //    stereo->compute(img1, img2, disp);
+ //    minMaxLoc(disp, &min3, &max3);
+ //    cout << min3 << " " << max3 << endl;
+
+	// std::string filename = "dispmap.xml";
+	// // std::string sad_filename = "dispmapopencv_255.xml";
+	// cv::FileStorage disp_file(filename, cv::FileStorage::WRITE);
+	// // cv::FileStorage sad_file(sad_filename, cv::FileStorage::WRITE);
+
+	// disp_file << "disp" << disp; // Write entire cv::Mat
+
+ //    //normalize(disp, disp, 0, 255, NORM_MINMAX, CV_8UC1);
+ //    disp.convertTo(disp, CV_32F, 1.0 / 16.0);
+
+
+	//////////////////////////////////////////////////
+	//////////////////////////////////////////////////
+	//////////////////////////////////////////////////
+	//////////////////////////////////////////////////
+
+
+
+	cv::Mat disp_img = cv::Mat::zeros(left_image.rows, left_image.cols, CV_8UC1);
+	cv::Mat disp_img_255 = cv::Mat::zeros(left_image.rows, left_image.cols, CV_8UC1);
+	
+	// set range to search from current pixel
+	int disparity_to_left = -64, disparity_to_right = 0;
+	int disparity_range = disparity_to_right - disparity_to_left;
+	int half_block_size = 21;
+
+	int row_right, col_right;
+	int row_start, row_end;
+	int left_half_range, right_half_range;
+	int col_start_right, col_end_right, col_start_left, col_end_left;
+
+	cv::Mat left_block, right_block, block_diff;
+	int total_sad_diff, lowest_sad_diff, best_disparity;
+	for (int row_i = 0; row_i < h; ++row_i)
+	{
+		for (int col_i = 0; col_i < w; ++col_i)
+		{
+			// traverses each pixel in the left image
+			lowest_sad_diff = 300 * square(2 * half_block_size + 1);
+			best_disparity = 0;
+			// define which elements of the right matrix are going to be in the comparison block
+			for (int col_diff = disparity_to_left; col_diff <= disparity_to_right; ++col_diff)
+			{
+				row_right = row_i;
+				col_right = col_i + col_diff; 
+
+				if (col_right < 0 || col_right >= w)
+					continue;
+
+				row_start = max(row_right - half_block_size, 0);
+				row_end = min(row_right + half_block_size + 1, h - 1);
+
+				col_start_left = max(col_i - half_block_size, 0);
+				col_end_left = min(col_i + half_block_size + 1, w - 1);
+
+				col_start_right = max(col_right - half_block_size, 0);
+				col_end_right = min(col_right + half_block_size + 1, w - 1);
+
+				left_half_range = std::min(col_i - col_start_left, col_right - col_start_right);
+				right_half_range = std::min(col_end_left - col_i - 1, col_end_right - col_right - 1);
+
+				col_start_left = max(col_i - left_half_range, 0);
+				col_end_left = min(col_i + right_half_range + 1, w - 1);
+
+				col_start_right = max(col_right - left_half_range, 0);
+				col_end_right = min(col_right + right_half_range + 1, w - 1);
+				
+				left_block = getBlock(left_image, row_start, row_end, col_start_left, col_end_left); 
+				right_block = getBlock(right_image, row_start, row_end, col_start_right, col_end_right); 
+
+				cv::absdiff(left_block, right_block, block_diff);
+				cv::Scalar sad_diff_array = cv::sum(block_diff);
+				total_sad_diff = sad_diff_array[0] + sad_diff_array[1] + sad_diff_array[2]; 
+				if (total_sad_diff < lowest_sad_diff)
+				{
+					lowest_sad_diff = total_sad_diff;
+					best_disparity = col_diff;
+				}
+
+			}
+			// disp_img_255.at<uchar>(row_i, col_i) = std::abs(255 - (int)255.0*(best_disparity-abs(disparity_to_left))/disparity_range);
+			// disp_img.at<uchar>(row_i, col_i) = std::abs(255 - (63+(int)192.0*(best_disparity-abs(disparity_to_left))/disparity_range));
+		
+			disp_img_255.at<uchar>(row_i, col_i) = std::abs((int)255.0*(best_disparity-abs(disparity_to_left))/disparity_range);
+			disp_img.at<uchar>(row_i, col_i) = std::abs((63+(int)192.0*(best_disparity-abs(disparity_to_left))/disparity_range));
+		}
+	}
+
+	cv::FileStorage disp_mine_file("dispmap_mine.xml", cv::FileStorage::WRITE);
+	disp_mine_file << "disp" << disp_img; // Write entire cv::Mat
+	cv::FileStorage disp_mine_file_255("dispmap_mine_255.xml", cv::FileStorage::WRITE);
+	disp_mine_file_255 << "disp" << disp_img_255; // Write entire cv::Mat
+	disp = disp_img_255;
+
+
+	//////////////////////////////////////////////////
+	//////////////////////////////////////////////////
+	//////////////////////////////////////////////////
+	//////////////////////////////////////////////////
+
+	cv::FileStorage disp_conv_file("dismap_conv.xml", cv::FileStorage::WRITE);
+	disp_conv_file << "disp_conv" << disp; // Write entire cv::Mat
+
+
+    // minMaxLoc(disp_img_255, &min3, &max3);
+
     cout << min3 << " " << max3 << endl;
-
-    //cout << disp.rows << " " << disp.cols << endl;
-
-    //cout << disp << endl;
-
-    // //-- Step 1: Detect the keypoints using SURF Detector, compute the descriptors
-    // int minHessian = 400;
-    // Ptr<SURF> detector = SURF::create( minHessian );
-    // std::vector<KeyPoint> keypoints1, keypoints2;
-    // Mat descriptors1, descriptors2;
-    // detector->detectAndCompute( img1, noArray(), keypoints1, descriptors1 );
-    // detector->detectAndCompute( img2, noArray(), keypoints2, descriptors2 );
-    
-    // //-- Step 2: Matching descriptor vectors with a FLANN based matcher
-    // // Since SURF is a floating-point descriptor NORM_L2 is used
-    // Ptr<DescriptorMatcher> matcher = DescriptorMatcher::create(DescriptorMatcher::FLANNBASED);
-    // std::vector< std::vector<DMatch> > knn_matches;
-    // matcher->knnMatch( descriptors1, descriptors2, knn_matches, 2 );
-    
-    // //-- Filter matches using the Lowe's ratio test
-    // const float ratio_thresh = 0.4f;
-    // std::vector<DMatch> good_matches;
-    // for (size_t i = 0; i < knn_matches.size(); i++)
-    // {
-    //     if (knn_matches[i][0].distance < ratio_thresh * knn_matches[i][1].distance)
-    //     {
-    //         good_matches.push_back(knn_matches[i][0]);
-    //     }
-    // }
-    
-    // //-- Draw matches
-    // Mat img_matches;
-    // drawMatches( img1, keypoints1, img2, keypoints2, good_matches, img_matches, Scalar::all(-1),
-    //              Scalar::all(-1), std::vector<char>(), DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS );
-
-    // long num_matches = good_matches.size();
-    // std::vector<Point2f> matched_points1;
-    // std::vector<Point2f> matched_points2;
-
-    // for (int i=0;i<num_matches;i++)
-    // {
-    //     int idx1=good_matches[i].trainIdx;
-    //     int idx2=good_matches[i].queryIdx;
-    //     matched_points1.push_back(keypoints1[idx1].pt);
-    //     matched_points2.push_back(keypoints2[idx2].pt);
-    // }
-
-    // //cout << matched_points1.at(0) << endl;
-
-    // //circle(img1, matched_points1.at(0), 10, (0, 255, 0), 2);
-    // //circle(img2, matched_points2.at(0), 10, (0, 255, 0), 2);
 
     std::vector<Point3d> points;
     std::vector<Point3d> colors;
@@ -130,17 +186,6 @@ int main( int argc, char* argv[] )
 
     double focal_length = 3979.911;
     double baseline = 193.001;
-    // double focal_length = 3979.911;
-    // double baseline = 193.001;
-
-    // for(int i = 0; i < matched_points1.size(); i++) {
-    //     double diff = matched_points1.at(i).x - matched_points2.at(i).x;
-    //     //cout << diff << endl;
-    //     double z = focal_length * baseline / diff;
-    //     double x = matched_points1.at(i).x * z / focal_length;
-    //     double y = matched_points1.at(i).y * z / focal_length;
-    //     points.push_back(Point3d(x, y, z));
-    // }
 
     Eigen::MatrixXd intrinsics(3, 3);
 
@@ -172,7 +217,6 @@ int main( int argc, char* argv[] )
         disp.row(i).copyTo(v);
 
         for(int j = 0; j < disp.cols; j++) {
-            
             //cout << i << " " << j << " "  << endl;
 
             if(v.at(j) > 0) {
@@ -181,40 +225,16 @@ int main( int argc, char* argv[] )
                 double z = Q23 * pw;
                 double x = ((float)j + Q03) * pw;
                 double y = ((float)i + Q13) * pw;
-                
-                //Vec3b intensity = img1_color.at<Vec3b>(j, i);
-                
-                
-
-                //for(int k = 0; k < image.channels(); k++) {
-                //    uchar col = intensity.val[k]; 
-                //}
-
-                //int color_b = 0;
-                //int color_g = 0;
-                //int color_r = 0;
-
-                //int color_b = intensity.val[0];
-                //int color_g = intensity.val[1];
-                //int color_r = intensity.val[2];
 
                 int color_b = img1_color.at<Vec3b>(i, j)[0];
                 int color_g = img1_color.at<Vec3b>(i, j)[1];
                 int color_r = img1_color.at<Vec3b>(i, j)[2];
 
-                //double z = focal_length * baseline / (v.at(j));
-                //double x = (float) j * z / focal_length;
-                //double y = (float) i * z / focal_length;
                 points.push_back(Point3d(x, y, z));
                 colors.push_back(Point3d(color_r, color_g, color_b));
-                //cout << z << " ";
             }
         }
-
-        //cout << endl;
     }
-
-    //cout << "Here!" << endl;
 
     for(int idx = 0; idx < points.size()-2; idx++) {
         Point3d pt1 = points.at(idx);
@@ -246,13 +266,10 @@ int main( int argc, char* argv[] )
         //file << point << "\n";
     } 
     
-    // for(int i = 0; i < faces.size(); i++) {
-    //     file << (int)faces.at(i).x << " " << (int)faces.at(i).y << " " << (int)faces.at(i).z << "\n";
-    // } 
     
     file.close();
 
-    //-- Show detected matches
+    //-- Show detected matches 
     //imshow("Good Matches", img_matches );
     //imshow("Matches", img_matches);
     imwrite("stereo.jpg", disp);
