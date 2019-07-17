@@ -31,7 +31,6 @@ inline int square(int x){ return x*x; }
 inline cv::Mat getBlock(cv::Mat& matrix, const int row_start, const int row_end, const int col_start, const int col_end) 
 {
 	cv::Mat block = matrix.rowRange(row_start, row_end).colRange(col_start, col_end); 
-	// cv::Mat block = matrix.rowRange(0, 20).colRange(10, 0); 
 	return block;
 }
 
@@ -50,8 +49,8 @@ int main( int argc, char* argv[] )
         parser.printMessage();
         return -1;
     }
-    // resize(img1_color, img1_color, cv::Size(), 0.3, 0.3);
-    // resize(img2_color, img2_color, cv::Size(), 0.3, 0.3);
+    // resize(img1_color, img1_color, cv::Size(), 0.2, 0.2);
+    // resize(img2_color, img2_color, cv::Size(), 0.2, 0.2);
 
     Mat img1, img2, disp;
 
@@ -65,21 +64,24 @@ int main( int argc, char* argv[] )
 
     double min3, max3;
 
-    //Ptr<StereoBM> stereo = StereoBM::create(16, 15);
- //    Ptr<StereoBM> stereo = StereoBM::create(256, 21);
+ //    // // Ptr<StereoBM> stereo = StereoBM::create(16, 15);
+ //    // Ptr<StereoBM> stereo = StereoBM::create(256, 21);
+ //    Ptr<StereoBM> stereo = StereoBM::create(48, 21);
+ //    // Ptr<StereoBM> stereo = StereoBM::create(64, 21);
+ //    // Ptr<StereoBM> stereo = StereoBM::create(128, 21);
 
  //    stereo->compute(img1, img2, disp);
  //    minMaxLoc(disp, &min3, &max3);
  //    cout << min3 << " " << max3 << endl;
 
-	// std::string filename = "dispmap.xml";
+	// std::string filename = "dispmap_original_opencv.xml";
 	// // std::string sad_filename = "dispmapopencv_255.xml";
 	// cv::FileStorage disp_file(filename, cv::FileStorage::WRITE);
 	// // cv::FileStorage sad_file(sad_filename, cv::FileStorage::WRITE);
 
 	// disp_file << "disp" << disp; // Write entire cv::Mat
 
- //    //normalize(disp, disp, 0, 255, NORM_MINMAX, CV_8UC1);
+ // //    //normalize(disp, disp, 0, 255, NORM_MINMAX, CV_8UC1);
  //    disp.convertTo(disp, CV_32F, 1.0 / 16.0);
 
 
@@ -88,15 +90,22 @@ int main( int argc, char* argv[] )
 	//////////////////////////////////////////////////
 	//////////////////////////////////////////////////
 
+	// cv::Mat disp_img = cv::Mat::zeros(left_image.rows, left_image.cols, CV_8UC1);
+	// cv::Mat disp_img_255 = cv::Mat::zeros(left_image.rows, left_image.cols, CV_8UC1);
 
+	cv::Mat disp_img = cv::Mat::zeros(left_image.rows, left_image.cols, CV_32S);
+	cv::Mat disp_img_255 = cv::Mat::zeros(left_image.rows, left_image.cols, CV_32S);//CV_32SC1
 
-	cv::Mat disp_img = cv::Mat::zeros(left_image.rows, left_image.cols, CV_8UC1);
-	cv::Mat disp_img_255 = cv::Mat::zeros(left_image.rows, left_image.cols, CV_8UC1);
+	// cv::Mat disp_img = cv::Mat::zeros(left_image.rows, left_image.cols, CV_32F);
+	// cv::Mat disp_img_255 = cv::Mat::zeros(left_image.rows, left_image.cols, CV_32F);
+	// cv::Mat disp_img_255 = cv::Mat::zeros(left_image.rows, left_image.cols, CV_16UC1);
 	
+	cv::Mat disp_img_grouped = cv::Mat::zeros(left_image.rows, left_image.cols, CV_32S);
 	// set range to search from current pixel
 	// int disparity_to_left = -64, disparity_to_right = 0;
-	int disparity_to_left = -64, disparity_to_right = 0;
-	int disparity_range = disparity_to_right - disparity_to_left;
+	// int disparity_to_left = -256, disparity_to_right = 0;
+	int disparity_to_left = -48, disparity_to_right = 0;
+	int disparity_range = abs(disparity_to_right - disparity_to_left);
 	// int half_block_size = 21;
 	int half_block_size = 21;
 
@@ -112,7 +121,7 @@ int main( int argc, char* argv[] )
 		for (int col_i = 0; col_i < w; ++col_i)
 		{
 			// traverses each pixel in the left image
-			lowest_sad_diff = 300 * square(2 * half_block_size + 1);
+			lowest_sad_diff = 50000 * square(2 * half_block_size + 1);
 			best_disparity = 0;
 			// define which elements of the right matrix are going to be in the comparison block
 			for (int col_diff = disparity_to_left; col_diff <= disparity_to_right; ++col_diff)
@@ -157,27 +166,92 @@ int main( int argc, char* argv[] )
 			// disp_img_255.at<uchar>(row_i, col_i) = std::abs(255 - (int)255.0*(best_disparity-abs(disparity_to_left))/disparity_range);
 			// disp_img.at<uchar>(row_i, col_i) = std::abs(255 - (63+(int)192.0*(best_disparity-abs(disparity_to_left))/disparity_range));
 		
-			disp_img_255.at<uchar>(row_i, col_i) = std::abs((int)255.0*(best_disparity-abs(disparity_to_left))/disparity_range);
-			disp_img.at<uchar>(row_i, col_i) = std::abs((63+(int)192.0*(best_disparity-abs(disparity_to_left))/disparity_range));
+			disp_img_255.at<int>(row_i, col_i) = std::abs(255 - (int)255.0*(best_disparity-disparity_to_left)/disparity_range);
+			// // disp_img.at<uchar>(row_i, col_i) = std::abs((63+(int)192.0*(best_disparity-abs(disparity_to_left))/disparity_range));
+			disp_img.at<int>(row_i, col_i) = best_disparity;
+
+			// disp_img_255.at<float>(row_i, col_i) = std::abs((int)255.0*(best_disparity-disparity_to_left)/disparity_range);
+			// disp_img.at<float>(row_i, col_i) = std::abs((63+(int)192.0*(best_disparity-abs(disparity_to_left))/disparity_range));
+			// disp_img.at<float>(row_i, col_i) = best_disparity;
+
+			// std::cout << best_disparity << " ";
+		}
+		// std::cout << std::endl;
+	}
+	int group_range = 85;
+	int original_value = 0;
+	for (int row_i = 0; row_i < h; ++row_i)
+	{
+		for (int col_i = 0; col_i < w; ++col_i)
+		{
+			original_value = disp_img_255.at<int>(row_i, col_i);
+			disp_img_grouped.at<int>(row_i, col_i) = (original_value / group_range) * group_range;
 		}
 	}
+
+	cv::Mat disp_img_median = cv::Mat::zeros(left_image.rows, left_image.cols, CV_32S);
+	medianBlur(disp_img_255, disp_img_median, 3);
+	// medianBlur(InputArray src, OutputArray dst, int ksize)
+
+	// int filter_size = 5;
+	// for (int row_i = 0; row_i < h; ++row_i)
+	// {
+	// 	for (int col_i = 0; col_i < w; ++col_i)
+	// 	{
+	// 		row_right = row_i;
+	// 		col_right = col_i + col_diff; 
+
+	// 		if (col_right < 0 || col_right >= w)
+	// 			continue;
+
+	// 		row_start = max(row_right - filter_size, 0);
+	// 		row_end = min(row_right + filter_size + 1, h - 1);
+
+	// 		col_start_left = max(col_i - filter_size, 0);
+	// 		col_end_left = min(col_i + filter_size + 1, w - 1);
+
+	// 		col_start_right = max(col_right - filter_size, 0);
+	// 		col_end_right = min(col_right + filter_size + 1, w - 1);
+
+	// 		left_half_range = std::min(col_i - col_start_left, col_right - col_start_right);
+	// 		right_half_range = std::min(col_end_left - col_i - 1, col_end_right - col_right - 1);
+
+	// 		col_start_left = max(col_i - left_half_range, 0);
+	// 		col_end_left = min(col_i + right_half_range + 1, w - 1);
+
+	// 		col_start_right = max(col_right - left_half_range, 0);
+	// 		col_end_right = min(col_right + right_half_range + 1, w - 1);
+			
+	// 		left_block = getBlock(disp_img_255, row_start, row_end, col_start_left, col_end_left); 
+	// 		// right_block = getBlock(right_image, row_start, row_end, col_start_right, col_end_right); 
+
+	// 		original_value = disp_img_255.at<int>(row_i, col_i);
+	// 		disp_img_grouped.at<int>(row_i, col_i) = (original_value / group_range) * group_range;
+	// 	}
+	// }
 
 	cv::FileStorage disp_mine_file("dispmap_mine.xml", cv::FileStorage::WRITE);
 	disp_mine_file << "disp" << disp_img; // Write entire cv::Mat
 	cv::FileStorage disp_mine_file_255("dispmap_mine_255.xml", cv::FileStorage::WRITE);
 	disp_mine_file_255 << "disp" << disp_img_255; // Write entire cv::Mat
-	disp = disp_img_255;
-	// disp = disp_img;
+	cv::FileStorage disp_mine_file_grouped("dispmap_mine_grouped.xml", cv::FileStorage::WRITE);
+	disp_mine_file_grouped << "disp" << disp_img_grouped; // Write entire cv::Mat
+	cv::FileStorage disp_mine_file_median("dispmap_mine_median.xml", cv::FileStorage::WRITE);
+	disp_mine_file_median << "disp" << disp_img_median; // Write entire cv::Mat
 
+	// disp = disp_img_255;
+	disp = disp_img_grouped;
+	// disp = disp_img;
 
     minMaxLoc(disp, &min3, &max3);
     cout << min3 << " " << max3 << endl;
 
+	//////////////////////////////////////////////////
+	//////////////////////////////////////////////////
+	//////////////////////////////////////////////////
+	//////////////////////////////////////////////////
 
-	//////////////////////////////////////////////////
-	//////////////////////////////////////////////////
-	//////////////////////////////////////////////////
-	//////////////////////////////////////////////////
+    bool our_camera = true;
 
 	cv::FileStorage disp_conv_file("dismap_conv.xml", cv::FileStorage::WRITE);
 	disp_conv_file << "disp_conv" << disp; // Write entire cv::Mat
@@ -186,44 +260,51 @@ int main( int argc, char* argv[] )
     std::vector<Point3d> colors;
     std::vector<Point3d> faces;
 
-    // double focal_length = 3979.911;
-    double focal_length = 413.69216919;  // web cam
-    // double focal_length = 489.6895905;  // web cam
-    // double focal_length = 594.95166016;  // web cam
-    // double baseline = 193.001;
-    double baseline = 5.7; //web cam
+    double focal_length = 3979.911;
+    double baseline = 193.001;
 
     Eigen::MatrixXd intrinsics(3, 3);
 
-    // intrinsics << 3979.911, 0.0, 1244.772,
-    //               0.0, 3979.911, 1019.507,
-    //               0.0, 0.0, 1.0;
-
-    // // web cam intrinsics
-    intrinsics << 413.69216919, 0.0, 369.60504179,
-                  0.0, 482.78549194, 242.59775176,
-                  0.0, 0.0, 1.0;
+    if (our_camera){
+    	baseline = 5.7; //web cam
+    	focal_length = 413.69216919;  // web cam
+    	// focal_length = 489.6895905;  // web cam
+    	// focal_length = 594.95166016;  // web cam
+    	// // web cam intrinsics
+	    intrinsics << 413.69216919, 0.0, 369.60504179,
+	                  0.0, 482.78549194, 242.59775176,
+	                  0.0, 0.0, 1.0;
     // intrinsics << 594.95166016, 0.0, 319.80993603,
     //               0.0, 594.95166016, 234.68265936,
     //               0.0, 0.0, 1.0;
-
+    }
+    else {
+	    intrinsics << 3979.911, 0.0, 1244.772,
+	                  0.0, 3979.911, 1019.507,
+	                  0.0, 0.0, 1.0;
+    }
 
     Eigen::MatrixXd intrinsics2(3, 3);
 
-    // intrinsics2 << 3979.911, 0.0, 1369.115,
-    //               0.0, 3979.911, 1019.507,
-    //               0.0, 0.0, 1.0;
-
     // // web cam intrinsics
-    intrinsics2 << 565.68701172, 0.0, 319.80993603,
-                  0.0, 594.95166016, 234.68265936,
-                  0.0, 0.0, 1.0;
+    if (our_camera)
+   	{
+	    intrinsics2 << 565.68701172, 0.0, 319.80993603,
+	                  0.0, 594.95166016, 234.68265936,
+	                  0.0, 0.0, 1.0;
     // intrinsics2 << 594.95166016, 0.0, 319.80993603,
     //               0.0, 594.95166016, 234.68265936,
     //               0.0, 0.0, 1.0;
+   	} 
+   	else 
+   	{
+	    intrinsics2 << 3979.911, 0.0, 1369.115,
+	                  0.0, 3979.911, 1019.507,
+	                  0.0, 0.0, 1.0;
+   	}
 
-    // double edgeThreshold = 10;
-    double edgeThreshold = 200;
+    double edgeThreshold = 10;
+    // double edgeThreshold = 200;
 
     double Q03 = -intrinsics(0, 2);
     double Q13 = -intrinsics(1, 2);
