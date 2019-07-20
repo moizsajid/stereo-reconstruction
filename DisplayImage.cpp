@@ -74,31 +74,28 @@ int main( int argc, char* argv[] )
 
     double min3, max3;
 
- //    // // Ptr<StereoBM> stereo = StereoBM::create(16, 15);
- //    // Ptr<StereoBM> stereo = StereoBM::create(256, 21);
- //    Ptr<StereoBM> stereo = StereoBM::create(48, 21);
- //    // Ptr<StereoBM> stereo = StereoBM::create(64, 21);
- //    // Ptr<StereoBM> stereo = StereoBM::create(128, 21);
+    //Ptr<StereoBM> stereo = StereoBM::create(16, 15);
+    Ptr<StereoBM> stereo = StereoBM::create(48, 15);
 
- //    stereo->compute(img1, img2, disp);
- //    minMaxLoc(disp, &min3, &max3);
- //    cout << min3 << " " << max3 << endl;
+    stereo->compute(img1, img2, disp);
+    minMaxLoc(disp, &min3, &max3);
+    cout << min3 << " " << max3 << endl;
 
-	// std::string filename = "dispmap_original_opencv.xml";
-	// // std::string sad_filename = "dispmapopencv_255.xml";
-	// cv::FileStorage disp_file(filename, cv::FileStorage::WRITE);
-	// // cv::FileStorage sad_file(sad_filename, cv::FileStorage::WRITE);
+	std::string filename = "dispmap.xml";
+	// std::string sad_filename = "dispmapopencv_255.xml";
+	cv::FileStorage disp_file(filename, cv::FileStorage::WRITE);
+	// cv::FileStorage sad_file(sad_filename, cv::FileStorage::WRITE);
 
-	// disp_file << "disp" << disp; // Write entire cv::Mat
+	disp_file << "disp" << disp; // Write entire cv::Mat
 
- // //    //normalize(disp, disp, 0, 255, NORM_MINMAX, CV_8UC1);
- //    disp.convertTo(disp, CV_32F, 1.0 / 16.0);
+    //normalize(disp, disp, 0, 255, NORM_MINMAX, CV_8UC1);
+    disp.convertTo(disp, CV_32F, 1.0 / 16.0);
 
 
-	//////////////////////////////////////////////////
-	//////////////////////////////////////////////////
-	//////////////////////////////////////////////////
-	//////////////////////////////////////////////////
+	// //////////////////////////////////////////////////
+	// //////////////////////////////////////////////////
+	// //////////////////////////////////////////////////
+	// //////////////////////////////////////////////////
 
 	// cv::Mat disp_img = cv::Mat::zeros(left_image.rows, left_image.cols, CV_8UC1);
 	// cv::Mat disp_img_255 = cv::Mat::zeros(left_image.rows, left_image.cols, CV_8UC1);
@@ -108,210 +105,84 @@ int main( int argc, char* argv[] )
 	// cv::Mat disp_img = cv::Mat::zeros(left_image.rows, left_image.cols, CV_32F);
 	// cv::Mat disp_img_255 = cv::Mat::zeros(left_image.rows, left_image.cols, CV_32F);//CV_32SC1
 
-	// cv::Mat disp_img = cv::Mat::zeros(left_image.rows, left_image.cols, CV_32F);
-	// cv::Mat disp_img_255 = cv::Mat::zeros(left_image.rows, left_image.cols, CV_32F);
-	// cv::Mat disp_img_255 = cv::Mat::zeros(left_image.rows, left_image.cols, CV_16UC1);
+	// cv::Mat disp_img = cv::Mat::zeros(left_image.rows, left_image.cols, CV_8UC1);
+	// cv::Mat disp_img_255 = cv::Mat::zeros(left_image.rows, left_image.cols, CV_8UC1);
 	
-	cv::Mat disp_img_grouped = cv::Mat::zeros(left_image.rows, left_image.cols, CV_32S);
-	// cv::Mat disp_img_grouped = cv::Mat::zeros(left_image.rows, left_image.cols, CV_32F);
-	// set range to search from current pixel
+	// // set range to search from current pixel
+	// // int disparity_to_left = -64, disparity_to_right = 0;
 	// int disparity_to_left = -64, disparity_to_right = 0;
-	// int disparity_to_left = -256, disparity_to_right = 0;
-	int disparity_to_left = -48, disparity_to_right = 0;
-	int disparity_range = abs(disparity_to_right - disparity_to_left);
-	// int half_block_size = 21;
-	int half_block_size = 5;
+	// int disparity_range = disparity_to_right - disparity_to_left;
+	// // int half_block_size = 21;
+	// int half_block_size = 15;
 
-	int row_right, col_right;
-	int row_start, row_end;
-	int left_half_range, right_half_range;
-	int col_start_right, col_end_right, col_start_left, col_end_left;
+	// int row_right, col_right;
+	// int row_start, row_end;
+	// int left_half_range, right_half_range;
+	// int col_start_right, col_end_right, col_start_left, col_end_left;
 
-	cv::Mat left_block, right_block, block_diff;
-	int total_sad_diff, lowest_sad_diff = 1e6, best_disparity = 0;
-	bool early_found = false; int count_early = 0;
-	for (int row_i = 0; row_i < h; ++row_i)
-	{
-		for (int col_i = 0; col_i < w; ++col_i)
-		{
-
-
-			// early_found = false;
-
-			// row_right = row_i;
-			// col_right = col_i + best_disparity; 
-
-			// if (col_right < 0 || col_right >= w)
-			// 	continue;
-
-			// row_start = max(row_right - half_block_size, 0);
-			// row_end = min(row_right + half_block_size + 1, h - 1);
-
-			// col_start_left = max(col_i - half_block_size, 0);
-			// col_end_left = min(col_i + half_block_size + 1, w - 1);
-
-			// col_start_right = max(col_right - half_block_size, 0);
-			// col_end_right = min(col_right + half_block_size + 1, w - 1);
-
-			// left_half_range = std::min(col_i - col_start_left, col_right - col_start_right);
-			// right_half_range = std::min(col_end_left - col_i - 1, col_end_right - col_right - 1);
-
-			// col_start_left = max(col_i - left_half_range, 0);
-			// col_end_left = min(col_i + right_half_range + 1, w - 1);
-
-			// col_start_right = max(col_right - left_half_range, 0);
-			// col_end_right = min(col_right + right_half_range + 1, w - 1);
-
-			// // only check for early disparity if the full kernel was fit inside to avoid matching border
-			// if (col_end_left - col_start_left >= 1 + half_block_size * 2)
-			// {
-			// 	left_block = getBlock(left_image, row_start, row_end, col_start_left, col_end_left); 
-			// 	right_block = getBlock(right_image, row_start, row_end, col_start_right, col_end_right); 
-
-			// 	cv::absdiff(left_block, right_block, block_diff);
-			// 	cv::Scalar sad_diff_array = cv::sum(block_diff);
-			// 	total_sad_diff = sad_diff_array[0] + sad_diff_array[1] + sad_diff_array[2]; 
-			// 	if (abs(total_sad_diff - lowest_sad_diff) <= 60)
-			// 	// if (lowest_sad_diff - total_sad_diff > 0.1 * lowest_sad_diff)
-			// 	{
-			// 		lowest_sad_diff = total_sad_diff;
-			// 		best_disparity = best_disparity;
-			// 		early_found = true;
-			// 		count_early++;
-			// 		// std::cout << "! ";
-			// 	}
-			// }
-			
-
-			if (!early_found)
-			{
-				// traverses each pixel in the left image
-				lowest_sad_diff = 50000 * square(2 * half_block_size + 1);
-				best_disparity = 0;
-				// define which elements of the right matrix are going to be in the comparison block
-				for (int col_diff = disparity_to_left; col_diff <= disparity_to_right; ++col_diff)
-				{
-					row_right = row_i;
-					col_right = col_i + col_diff; 
-
-					if (col_right < 0 || col_right >= w)
-						continue;
-
-					row_start = max(row_right - half_block_size, 0);
-					row_end = min(row_right + half_block_size + 1, h - 1);
-
-					col_start_left = max(col_i - half_block_size, 0);
-					col_end_left = min(col_i + half_block_size + 1, w - 1);
-
-					col_start_right = max(col_right - half_block_size, 0);
-					col_end_right = min(col_right + half_block_size + 1, w - 1);
-
-					left_half_range = std::min(col_i - col_start_left, col_right - col_start_right);
-					right_half_range = std::min(col_end_left - col_i - 1, col_end_right - col_right - 1);
-
-					col_start_left = max(col_i - left_half_range, 0);
-					col_end_left = min(col_i + right_half_range + 1, w - 1);
-
-					col_start_right = max(col_right - left_half_range, 0);
-					col_end_right = min(col_right + right_half_range + 1, w - 1);
-					
-					left_block = getBlock(left_image, row_start, row_end, col_start_left, col_end_left); 
-					right_block = getBlock(right_image, row_start, row_end, col_start_right, col_end_right); 
-
-					cv::absdiff(left_block, right_block, block_diff);
-					cv::Scalar sad_diff_array = cv::sum(block_diff);
-					total_sad_diff = sad_diff_array[0] + sad_diff_array[1] + sad_diff_array[2]; 
-					if (total_sad_diff < lowest_sad_diff)
-					// if (lowest_sad_diff - total_sad_diff > 0.1 * lowest_sad_diff)
-					{
-						lowest_sad_diff = total_sad_diff;
-						best_disparity = col_diff;
-					}
-
-				}
-				
-			}
-			// disp_img_255.at<uchar>(row_i, col_i) = std::abs(255 - (int)255.0*(best_disparity-abs(disparity_to_left))/disparity_range);
-			// disp_img.at<uchar>(row_i, col_i) = std::abs(255 - (63+(int)192.0*(best_disparity-abs(disparity_to_left))/disparity_range));
-		
-			// disp_img_255.at<int>(row_i, col_i) = std::abs(255 - (int)255.0*(best_disparity-disparity_to_left)/disparity_range);
-			// // // disp_img.at<uchar>(row_i, col_i) = std::abs((63+(int)192.0*(best_disparity-abs(disparity_to_left))/disparity_range));
-			// disp_img.at<int>(row_i, col_i) = best_disparity;
-
-			disp_img_255.at<int>(row_i, col_i) = std::abs(255.0 - (int)255.0*(best_disparity-disparity_to_left)/disparity_range);
-			// disp_img_255.at<int>(row_i, col_i) = std::abs((int)255.0*(best_disparity-disparity_to_left)/disparity_range);
-			// // disp_img.at<uchar>(row_i, col_i) = std::abs((63+(int)192.0*(best_disparity-abs(disparity_to_left))/disparity_range));
-			disp_img.at<int>(row_i, col_i) = (int)best_disparity;
-
-			// std::cout << best_disparity << " ";
-		}
-		// std::cout << std::endl;
-	}
-
-	// cv::Mat disp_img_median = cv::Mat::zeros(left_image.rows, left_image.cols, CV_32F);
-	// medianBlur(disp_img_255, disp_img_median, 21);
-	// cout << "248" << endl;
-	int group_range = 85;
-	// int group_range = 42;
-	int original_value = 0;
-	for (int row_i = 0; row_i < h; ++row_i)
-	{
-		for (int col_i = 0; col_i < w; ++col_i)
-		{
-			original_value = disp_img_255.at<int>(row_i, col_i);
-			// original_value = disp_img_median.at<int>(row_i, col_i);
-			disp_img_grouped.at<int>(row_i, col_i) = (original_value / group_range) * group_range;
-		}
-	}
-	// cout << "251" << endl;
-	cout << (float) 100.0 * count_early / (float)(h * w) << endl;
-	// medianBlur(InputArray src, OutputArray dst, int ksize)
-
-	// int filter_size = 5;
+	// cv::Mat left_block, right_block, block_diff;
+	// int total_sad_diff, lowest_sad_diff, best_disparity;
 	// for (int row_i = 0; row_i < h; ++row_i)
 	// {
 	// 	for (int col_i = 0; col_i < w; ++col_i)
 	// 	{
-	// 		row_right = row_i;
-	// 		col_right = col_i + col_diff; 
+	// 		// traverses each pixel in the left image
+	// 		lowest_sad_diff = 300 * square(2 * half_block_size + 1);
+	// 		best_disparity = 0;
+	// 		// define which elements of the right matrix are going to be in the comparison block
+	// 		for (int col_diff = disparity_to_left; col_diff <= disparity_to_right; ++col_diff)
+	// 		{
+	// 			row_right = row_i;
+	// 			col_right = col_i + col_diff; 
 
-	// 		if (col_right < 0 || col_right >= w)
-	// 			continue;
+	// 			if (col_right < 0 || col_right >= w)
+	// 				continue;
 
-	// 		row_start = max(row_right - filter_size, 0);
-	// 		row_end = min(row_right + filter_size + 1, h - 1);
+	// 			row_start = max(row_right - half_block_size, 0);
+	// 			row_end = min(row_right + half_block_size + 1, h - 1);
 
-	// 		col_start_left = max(col_i - filter_size, 0);
-	// 		col_end_left = min(col_i + filter_size + 1, w - 1);
+	// 			col_start_left = max(col_i - half_block_size, 0);
+	// 			col_end_left = min(col_i + half_block_size + 1, w - 1);
 
-	// 		col_start_right = max(col_right - filter_size, 0);
-	// 		col_end_right = min(col_right + filter_size + 1, w - 1);
+	// 			col_start_right = max(col_right - half_block_size, 0);
+	// 			col_end_right = min(col_right + half_block_size + 1, w - 1);
 
-	// 		left_half_range = std::min(col_i - col_start_left, col_right - col_start_right);
-	// 		right_half_range = std::min(col_end_left - col_i - 1, col_end_right - col_right - 1);
+	// 			left_half_range = std::min(col_i - col_start_left, col_right - col_start_right);
+	// 			right_half_range = std::min(col_end_left - col_i - 1, col_end_right - col_right - 1);
 
-	// 		col_start_left = max(col_i - left_half_range, 0);
-	// 		col_end_left = min(col_i + right_half_range + 1, w - 1);
+	// 			col_start_left = max(col_i - left_half_range, 0);
+	// 			col_end_left = min(col_i + right_half_range + 1, w - 1);
 
-	// 		col_start_right = max(col_right - left_half_range, 0);
-	// 		col_end_right = min(col_right + right_half_range + 1, w - 1);
-			
-	// 		left_block = getBlock(disp_img_255, row_start, row_end, col_start_left, col_end_left); 
-	// 		// right_block = getBlock(right_image, row_start, row_end, col_start_right, col_end_right); 
+	// 			col_start_right = max(col_right - left_half_range, 0);
+	// 			col_end_right = min(col_right + right_half_range + 1, w - 1);
+				
+	// 			left_block = getBlock(left_image, row_start, row_end, col_start_left, col_end_left); 
+	// 			right_block = getBlock(right_image, row_start, row_end, col_start_right, col_end_right); 
 
-	// 		original_value = disp_img_255.at<int>(row_i, col_i);
-	// 		disp_img_grouped.at<int>(row_i, col_i) = (original_value / group_range) * group_range;
+	// 			cv::absdiff(left_block, right_block, block_diff);
+	// 			cv::Scalar sad_diff_array = cv::sum(block_diff);
+	// 			total_sad_diff = sad_diff_array[0] + sad_diff_array[1] + sad_diff_array[2]; 
+	// 			if (total_sad_diff < lowest_sad_diff)
+	// 			{
+	// 				lowest_sad_diff = total_sad_diff;
+	// 				best_disparity = col_diff;
+	// 			}
+
+	// 		}
+	// 		// disp_img_255.at<uchar>(row_i, col_i) = std::abs(255 - (int)255.0*(best_disparity-abs(disparity_to_left))/disparity_range);
+	// 		// disp_img.at<uchar>(row_i, col_i) = std::abs(255 - (63+(int)192.0*(best_disparity-abs(disparity_to_left))/disparity_range));
+		
+	// 		disp_img_255.at<uchar>(row_i, col_i) = std::abs((int)255.0*(best_disparity-abs(disparity_to_left))/disparity_range);
+	// 		disp_img.at<uchar>(row_i, col_i) = std::abs((63+(int)192.0*(best_disparity-abs(disparity_to_left))/disparity_range));
 	// 	}
 	// }
 
-	cv::FileStorage disp_mine_file("dispmap_mine.xml", cv::FileStorage::WRITE);
-	disp_mine_file << "disp" << disp_img; // Write entire cv::Mat
-	cv::FileStorage disp_mine_file_255("dispmap_mine_255.xml", cv::FileStorage::WRITE);
-	disp_mine_file_255 << "disp" << disp_img_255; // Write entire cv::Mat
-	cv::FileStorage disp_mine_file_grouped("dispmap_mine_grouped.xml", cv::FileStorage::WRITE);
-	disp_mine_file_grouped << "disp" << disp_img_grouped; // Write entire cv::Mat
-	// cv::FileStorage disp_mine_file_median("dispmap_mine_median.xml", cv::FileStorage::WRITE);
-	// disp_mine_file_median << "disp" << disp_img_median; // Write entire cv::Mat
+	// cv::FileStorage disp_mine_file("dispmap_mine.xml", cv::FileStorage::WRITE);
+	// disp_mine_file << "disp" << disp_img; // Write entire cv::Mat
+	// cv::FileStorage disp_mine_file_255("dispmap_mine_255.xml", cv::FileStorage::WRITE);
+	// disp_mine_file_255 << "disp" << disp_img_255; // Write entire cv::Mat
+	// disp = disp_img_255;
+	// // disp = disp_img;
 
 	// disp = disp_img_255;
 	// disp = disp_img;
