@@ -1,6 +1,7 @@
 // ./DisplayImage -input1=./datasets/Motorcycle-perfect/im0.png -input2=./datasets/Motorcycle-perfect/im1.png
 // ./DisplayImage -input1=./data/tsukuba_l.png -input2=./data/tsukuba_r.png
-// ./DisplayImage -input1=./datasets/ours/left_1.jpg -input2=./datasets/ours/right_1.jpg 
+// ./DisplayImage -input1=./datasets/ours/left_1.jpg -input2=./datasets/ours/right_1.jpg
+ // ./DisplayImage -input1=./camera-calibration/rectified1.jpg -input2=./camera-calibration/rectified2.jpg
 
 #include <iostream>
 #include <fstream>
@@ -74,52 +75,14 @@ int main( int argc, char* argv[] )
 
     double min3, max3;
 
-<<<<<<< HEAD
-    // //Ptr<StereoBM> stereo = StereoBM::create(16, 15);
-    // Ptr<StereoBM> stereo = StereoBM::create(48, 15);
-
-    // stereo->compute(img1, img2, disp);
-    // minMaxLoc(disp, &min3, &max3);
-    // cout << min3 << " " << max3 << endl;
-
-	// std::string filename = "dispmap.xml";
-	// // std::string sad_filename = "dispmapopencv_255.xml";
-	// cv::FileStorage disp_file(filename, cv::FileStorage::WRITE);
-	// // cv::FileStorage sad_file(sad_filename, cv::FileStorage::WRITE);
-
-	// disp_file << "disp" << disp; // Write entire cv::Mat
-
-    // //normalize(disp, disp, 0, 255, NORM_MINMAX, CV_8UC1);
-    // disp.convertTo(disp, CV_32F, 1.0 / 16.0);
-
-
-	// //////////////////////////////////////////////////
-	// //////////////////////////////////////////////////
-	// //////////////////////////////////////////////////
-	// //////////////////////////////////////////////////
-
-
-
-	cv::Mat disp_img = cv::Mat::zeros(left_image.rows, left_image.cols, CV_8UC1);
-	cv::Mat disp_img_255 = cv::Mat::zeros(left_image.rows, left_image.cols, CV_8UC1);
-=======
 	cv::Mat disp_img_255 = cv::Mat::zeros(left_image.rows, left_image.cols, CV_32S);//CV_32SC1
->>>>>>> disparity_to_push
 	
 	cv::Mat disp_img_grouped = cv::Mat::zeros(left_image.rows, left_image.cols, CV_32S);
 
 	// set range to search from current pixel
-<<<<<<< HEAD
-	// int disparity_to_left = -64, disparity_to_right = 0;
-	int disparity_to_left = -64, disparity_to_right = 0;
-	int disparity_range = disparity_to_right - disparity_to_left;
-	int half_block_size = 21;
-	//int half_block_size = 15;
-=======
 	int disparity_to_left = -70, disparity_to_right = 40;  // erlier -256, -48
 	int disparity_range = abs(disparity_to_right - disparity_to_left);
-	int half_block_size = 5; // earlier 21, 5, 11
->>>>>>> disparity_to_push
+	int half_block_size = 15; // earlier 21, 5, 11
 
 	int row_right, col_right;
 	int row_start, row_end;
@@ -215,24 +178,38 @@ int main( int argc, char* argv[] )
     std::vector<Point3d> colors;
     std::vector<Point3d> faces;
 
-    double focal_length = 3979.911;
-    double baseline = 193.001;
+    double focal_length;
+    double baseline;
 
     Eigen::MatrixXd intrinsics(3, 3);
 
     if (our_camera)
     {
-    	baseline = 5.7; //web cam
-    	focal_length = 413.69216919;  // web cam
-    	// focal_length = 489.6895905;  // web cam
-    	// focal_length = 594.95166016;  // web cam
-    	// // web cam intrinsics
-	    intrinsics << 413.69216919, 0.0, 369.60504179,
-	                  0.0, 482.78549194, 242.59775176,
-	                  0.0, 0.0, 1.0;
+    	// baseline = 5.7; //web cam
+    	// focal_length = 413.69216919;  // web cam
+    	// // focal_length = 489.6895905;  // web cam
+    	// // focal_length = 594.95166016;  // web cam
+    	// // // web cam intrinsics
+	    // intrinsics << 413.69216919, 0.0, 369.60504179,
+	    //               0.0, 482.78549194, 242.59775176,
+	    //               0.0, 0.0, 1.0;
+
+        baseline = 100; //web cam
+    	focal_length = 1740.01245;  // web cam
+
+
+	    intrinsics <<   1740.01245, 0.0, 779.601468,
+                        0.0, 1742.12231, 1138.81797,
+                        0.0, 0.0, 1.0;
+
+
     }
     else   // if database images
     {
+
+        focal_length = 3979.911;
+        baseline = 193.001;
+
 	    intrinsics << 3979.911, 0.0, 1244.772,
 	                  0.0, 3979.911, 1019.507,
 	                  0.0, 0.0, 1.0;
@@ -243,9 +220,15 @@ int main( int argc, char* argv[] )
     // // web cam intrinsics
     if (our_camera)
    	{
-	    intrinsics2 << 565.68701172, 0.0, 319.80993603,
-	                  0.0, 594.95166016, 234.68265936,
-	                  0.0, 0.0, 1.0;
+	    // intrinsics2 << 565.68701172, 0.0, 319.80993603,
+	    //               0.0, 594.95166016, 234.68265936,
+	    //               0.0, 0.0, 1.0;
+
+
+
+        intrinsics2 <<      1612.98267, 0.0, 778.885092,
+                            0.0, 1642.61304, 1083.29674,
+                            0.0, 0.0, 1.0;
    	} 
    	else  // if database images
    	{
