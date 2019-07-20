@@ -49,15 +49,19 @@ int main( int argc, char* argv[] )
         parser.printMessage();
         return -1;
     }
-    if (img1_color.rows > 1500)
+    // if (img1_color.rows > 1500)
+    if (img1_color.rows > 700)
     {
-    	float ratio = 0.2;
+    	float ratio = 0.5;
 	    resize(img1_color, img1_color, cv::Size(), ratio, ratio);
 	    resize(img2_color, img2_color, cv::Size(), ratio, ratio);
+        std::cout << "resized " << ratio << endl;
     }
 
     Mat img1, img2, disp;
 
+    // img1 = img1_color;
+    // img2 = img2_color;
     cvtColor(img1_color, img1, COLOR_BGR2GRAY);
     cvtColor(img2_color, img2, COLOR_BGR2GRAY);
 
@@ -74,9 +78,9 @@ int main( int argc, char* argv[] )
 	cv::Mat disp_img_grouped = cv::Mat::zeros(left_image.rows, left_image.cols, CV_32S);
 
 	// set range to search from current pixel
-	int disparity_to_left = -48, disparity_to_right = 0;  // erlier -256, -48
+	int disparity_to_left = -70, disparity_to_right = 40;  // erlier -256, -48
 	int disparity_range = abs(disparity_to_right - disparity_to_left);
-	int half_block_size = 11; // earlier 21, 5, 11
+	int half_block_size = 5; // earlier 21, 5, 11
 
 	int row_right, col_right;
 	int row_start, row_end;
@@ -133,16 +137,14 @@ int main( int argc, char* argv[] )
 						lowest_sad_diff = total_sad_diff;
 						best_disparity = col_diff;
 					}
-
 				}
-				
 			}
 			disp_img_255.at<int>(row_i, col_i) = std::abs(255.0 - (int)255.0*(best_disparity-disparity_to_left)/disparity_range);
 		}
 	}
 
-	int group_range = 2;  // modify this parameter to control how many groups at the end
-	group_range = 255 / group_range; 
+	int group_range = 10;  // modify this parameter to control how many groups at the end
+	group_range = 255 / group_range + 1; 
 
 	int original_value = 0;
 	for (int row_i = 0; row_i < h; ++row_i)
@@ -150,7 +152,7 @@ int main( int argc, char* argv[] )
 		for (int col_i = 0; col_i < w; ++col_i)
 		{
 			original_value = disp_img_255.at<int>(row_i, col_i);
-			disp_img_grouped.at<int>(row_i, col_i) = (original_value / group_range) * group_range;
+			disp_img_grouped.at<int>(row_i, col_i) = ((original_value / group_range) * group_range + 1);
 		}
 	}
 
