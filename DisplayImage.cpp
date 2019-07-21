@@ -52,13 +52,13 @@ int main( int argc, char* argv[] )
         return -1;
     }
     // if (img1_color.rows > 1500)
-    if (img1_color.rows > 700)
-    {
-    	float ratio = 0.5;
-	    resize(img1_color, img1_color, cv::Size(), ratio, ratio);
-	    resize(img2_color, img2_color, cv::Size(), ratio, ratio);
-        std::cout << "resized " << ratio << endl;
-    }
+    // if (img1_color.rows > 700)
+    // {
+    // 	float ratio = 0.5;
+	   //  resize(img1_color, img1_color, cv::Size(), ratio, ratio);
+	   //  resize(img2_color, img2_color, cv::Size(), ratio, ratio);
+    //     std::cout << "resized " << ratio << endl;
+    // }
 
     Mat img1, img2, disp;
 
@@ -80,9 +80,10 @@ int main( int argc, char* argv[] )
 	cv::Mat disp_img_grouped = cv::Mat::zeros(left_image.rows, left_image.cols, CV_32S);
 
 	// set range to search from current pixel
-	int disparity_to_left = -70, disparity_to_right = 40;  // erlier -256, -48
+	// int disparity_to_left = -90, disparity_to_right = 40;  // erlier -256, -48
+    int disparity_to_left = -170, disparity_to_right = 85;  // erlier -256, -48
 	int disparity_range = abs(disparity_to_right - disparity_to_left);
-	int half_block_size = 15; // earlier 21, 5, 11
+	int half_block_size = 7; // earlier 21, 5, 11
 
 	int row_right, col_right;
 	int row_start, row_end;
@@ -145,7 +146,11 @@ int main( int argc, char* argv[] )
 		}
 	}
 
+<<<<<<< HEAD
 	int group_range = 3;  // modify this parameter to control how many groups at the end
+=======
+	int group_range = 2;  // modify this parameter to control how many groups at the end
+>>>>>>> 649b402dc2870a1d694535b43c58f84c04142d93
 	group_range = 255 / group_range + 1; 
 
 	int original_value = 0;
@@ -163,13 +168,13 @@ int main( int argc, char* argv[] )
 	cv::FileStorage disp_file_grouped("dispmap_grouped.xml", cv::FileStorage::WRITE);
 	disp_file_grouped << "disp" << disp_img_grouped; // Write entire cv::Mat
 
-	disp = disp_img_grouped;
-	// disp = disp_img_255;
+	// disp = disp_img_grouped;
+	disp = disp_img_255;
 
     minMaxLoc(disp, &min3, &max3);
     cout << min3 << " " << max3 << endl;
 
-    bool our_camera = false; // using our camera or not? Calibration params need to be changed
+    bool our_camera = true; // using our camera or not? Calibration params need to be changed
 
 	cv::FileStorage disp_conv_file("dismap_conv.xml", cv::FileStorage::WRITE);
 	disp_conv_file << "disp_conv" << disp; // Write entire cv::Mat
