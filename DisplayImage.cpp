@@ -1,7 +1,8 @@
 // ./DisplayImage -input1=./datasets/Motorcycle-perfect/im0.png -input2=./datasets/Motorcycle-perfect/im1.png
 // ./DisplayImage -input1=./data/tsukuba_l.png -input2=./data/tsukuba_r.png
 // ./DisplayImage -input1=./datasets/ours/left_1.jpg -input2=./datasets/ours/right_1.jpg
- // ./DisplayImage -input1=./camera-calibration/rectified1.jpg -input2=./camera-calibration/rectified2.jpg
+// ./DisplayImage -input1=./camera-calibration/rectified1.jpg -input2=./camera-calibration/rectified2.jpg
+// ./DisplayImage -input1=./datasets/4_l.jpg -input2=./datasets/4_r.jpg
 
 #include <iostream>
 #include <fstream>
@@ -51,12 +52,13 @@ int main( int argc, char* argv[] )
         parser.printMessage();
         return -1;
     }
+    
     // if (img1_color.rows > 1500)
     // if (img1_color.rows > 700)
     // {
     // 	float ratio = 0.5;
-	   //  resize(img1_color, img1_color, cv::Size(), ratio, ratio);
-	   //  resize(img2_color, img2_color, cv::Size(), ratio, ratio);
+	//     resize(img1_color, img1_color, cv::Size(), ratio, ratio);
+	//     resize(img2_color, img2_color, cv::Size(), ratio, ratio);
     //     std::cout << "resized " << ratio << endl;
     // }
 
@@ -146,11 +148,7 @@ int main( int argc, char* argv[] )
 		}
 	}
 
-<<<<<<< HEAD
-	int group_range = 3;  // modify this parameter to control how many groups at the end
-=======
 	int group_range = 2;  // modify this parameter to control how many groups at the end
->>>>>>> 649b402dc2870a1d694535b43c58f84c04142d93
 	group_range = 255 / group_range + 1; 
 
 	int original_value = 0;
@@ -200,12 +198,20 @@ int main( int argc, char* argv[] )
 	    //               0.0, 0.0, 1.0;
 
         baseline = 100; //web cam
-    	focal_length = 1740.01245;  // web cam
+    	focal_length = 930.04052734;  // web cam
 
 
-	    intrinsics <<   1740.01245, 0.0, 779.601468,
-                        0.0, 1742.12231, 1138.81797,
-                        0.0, 0.0, 1.0;
+	    // intrinsics <<   1740.01245, 0.0, 779.601468,
+        //                 0.0, 1742.12231, 1138.81797,
+        //                 0.0, 0.0, 1.0;
+
+        //intrinsics << 1713.8958377182626, 0.0, 1168.6382298861342, 
+        ///0.0, 1716.5356058238715, 780.28009828959432, 
+        //0.0, 0.0, 1.0; 
+
+        intrinsics <<   930.04052734, 0.0, 353.75734512,
+                        0.0, 931.65527344, 633.84417384,
+                        0.0, 0.0, 1.0;        
 
 
     }
@@ -229,12 +235,19 @@ int main( int argc, char* argv[] )
 	    //               0.0, 594.95166016, 234.68265936,
 	    //               0.0, 0.0, 1.0;
 
+        // intrinsics2 <<      1612.98267, 0.0, 778.885092,
+        //                     0.0, 1642.61304, 1083.29674,
+        //                     0.0, 0.0, 1.0;
 
+        // intrinsics2 <<      1708.9200093490208, 0.0, 1117.3724582861462,
+        //                     0.0, 1714.4720073759254, 751.34224661161397,
+        //                     0.0, 0.0, 1.0;
+   	
+        intrinsics2 <<  903.25213623, 0.0, 384.93938592,
+                        0.0, 896.62097168, 639.9703307,
+                        0.0, 0.0, 1.0;
 
-        intrinsics2 <<      1612.98267, 0.0, 778.885092,
-                            0.0, 1642.61304, 1083.29674,
-                            0.0, 0.0, 1.0;
-   	} 
+    } 
    	else  // if database images
    	{
 	    intrinsics2 << 3979.911, 0.0, 1369.115,
@@ -242,7 +255,7 @@ int main( int argc, char* argv[] )
 	                  0.0, 0.0, 1.0;
    	}
 
-    double edgeThreshold = 10;
+    double edgeThreshold = 10.0;
 
     double Q03 = -intrinsics(0, 2);
     double Q13 = -intrinsics(1, 2);
@@ -286,6 +299,8 @@ int main( int argc, char* argv[] )
         double len2 = norm(pt1-pt3);
         double len3 = norm(pt2-pt3);
 
+        //cout << len1 + len2 + len3 << endl;
+
         if(len1 + len2 + len3 < edgeThreshold) {
             faces.push_back(Point3d(idx, idx+1, idx+2));
         }
@@ -297,12 +312,15 @@ int main( int argc, char* argv[] )
     file << std::fixed;
 
     file << "COFF\n";
-    file << points.size() << " 0 0\n";
+    file << points.size() << " " <<  faces.size() << " 0\n";
 
     for(int i = 0; i < points.size(); i++) {
         file << std::setprecision(2) << points.at(i).x << " " << points.at(i).y << " " << points.at(i).z << " " << (int)colors.at(i).x << " " << (int)colors.at(i).y << " " << (int)colors.at(i).z << " 255\n";
     } 
     
+    for(int i = 0; i < faces.size(); i++) {
+        file << "3 " << (int)faces.at(i).x << " " << (int)faces.at(i).y << " " << (int)faces.at(i).z << "\n";
+    }
     
     file.close();
 
