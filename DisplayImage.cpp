@@ -145,7 +145,7 @@ int main( int argc, char* argv[] )
 		}
 	}
 
-	int group_range = 10;  // modify this parameter to control how many groups at the end
+	int group_range = 3;  // modify this parameter to control how many groups at the end
 	group_range = 255 / group_range + 1; 
 
 	int original_value = 0;
