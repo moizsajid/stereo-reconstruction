@@ -50,11 +50,11 @@ cameraMatrix2 = newcameramtx_right
 distCoeffs1 = dist1
 distCoeffs2 = dist2
 
-img1_color = cv2.imread('./new_l.jpg') #queryimage # left image
-img2_color = cv2.imread('./new_r.jpg') #trainimage # right image
+img1_color = cv2.imread('./images/youssef_l.jpg') #queryimage # left image
+img2_color = cv2.imread('./images/youssef_r.jpg') #trainimage # right image
 
-img1_color = cv2.rotate(img1_color, cv2.ROTATE_90_COUNTERCLOCKWISE)
-img2_color = cv2.rotate(img2_color, cv2.ROTATE_90_CLOCKWISE)
+#img1_color = cv2.rotate(img1_color, cv2.ROTATE_90_COUNTERCLOCKWISE)
+#img2_color = cv2.rotate(img2_color, cv2.ROTATE_90_CLOCKWISE)
 
 img1_color = cv2.undistort(img1_color, cameraMatrix1, dist1, None, cameraMatrix1)
 img2_color = cv2.undistort(img2_color, cameraMatrix2, dist2, None, cameraMatrix2)
