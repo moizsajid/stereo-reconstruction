@@ -54,13 +54,13 @@ int main( int argc, char* argv[] )
     }
     
     // if (img1_color.rows > 1500)
-    // if (img1_color.rows > 700)
-    // {
-    // 	float ratio = 0.5;
-	//     resize(img1_color, img1_color, cv::Size(), ratio, ratio);
-	//     resize(img2_color, img2_color, cv::Size(), ratio, ratio);
-    //     std::cout << "resized " << ratio << endl;
-    // }
+    if (img1_color.rows > 700)
+    {
+    	float ratio = 0.5;
+	    resize(img1_color, img1_color, cv::Size(), ratio, ratio);
+	    resize(img2_color, img2_color, cv::Size(), ratio, ratio);
+        std::cout << "resized " << ratio << endl;
+    }
 
     Mat img1, img2, disp;
 
@@ -94,54 +94,51 @@ int main( int argc, char* argv[] )
 
 	cv::Mat left_block, right_block, block_diff;
 	int total_sad_diff, lowest_sad_diff = 1e6, best_disparity = 0;
-	bool early_found = false;
+
 	for (int row_i = 0; row_i < h; ++row_i)
 	{
 		for (int col_i = 0; col_i < w; ++col_i)
 		{
-			if (!early_found)
+			// traverses each pixel in the left image
+			lowest_sad_diff = 50000 * square(2 * half_block_size + 1);
+			best_disparity = 0;
+			// define which elements of the right matrix are going to be in the comparison block
+			for (int col_diff = disparity_to_left; col_diff <= disparity_to_right; ++col_diff)
 			{
-				// traverses each pixel in the left image
-				lowest_sad_diff = 50000 * square(2 * half_block_size + 1);
-				best_disparity = 0;
-				// define which elements of the right matrix are going to be in the comparison block
-				for (int col_diff = disparity_to_left; col_diff <= disparity_to_right; ++col_diff)
+				row_right = row_i;
+				col_right = col_i + col_diff; 
+
+				if (col_right < 0 || col_right >= w)
+					continue;
+
+				row_start = max(row_right - half_block_size, 0);
+				row_end = min(row_right + half_block_size + 1, h - 1);
+
+				col_start_left = max(col_i - half_block_size, 0);
+				col_end_left = min(col_i + half_block_size + 1, w - 1);
+
+				col_start_right = max(col_right - half_block_size, 0);
+				col_end_right = min(col_right + half_block_size + 1, w - 1);
+
+				left_half_range = std::min(col_i - col_start_left, col_right - col_start_right);
+				right_half_range = std::min(col_end_left - col_i - 1, col_end_right - col_right - 1);
+
+				col_start_left = max(col_i - left_half_range, 0);
+				col_end_left = min(col_i + right_half_range + 1, w - 1);
+
+				col_start_right = max(col_right - left_half_range, 0);
+				col_end_right = min(col_right + right_half_range + 1, w - 1);
+				
+				left_block = getBlock(left_image, row_start, row_end, col_start_left, col_end_left); 
+				right_block = getBlock(right_image, row_start, row_end, col_start_right, col_end_right); 
+
+				cv::absdiff(left_block, right_block, block_diff);
+				cv::Scalar sad_diff_array = cv::sum(block_diff);
+				total_sad_diff = sad_diff_array[0] + sad_diff_array[1] + sad_diff_array[2]; 
+				if (total_sad_diff < lowest_sad_diff)
 				{
-					row_right = row_i;
-					col_right = col_i + col_diff; 
-
-					if (col_right < 0 || col_right >= w)
-						continue;
-
-					row_start = max(row_right - half_block_size, 0);
-					row_end = min(row_right + half_block_size + 1, h - 1);
-
-					col_start_left = max(col_i - half_block_size, 0);
-					col_end_left = min(col_i + half_block_size + 1, w - 1);
-
-					col_start_right = max(col_right - half_block_size, 0);
-					col_end_right = min(col_right + half_block_size + 1, w - 1);
-
-					left_half_range = std::min(col_i - col_start_left, col_right - col_start_right);
-					right_half_range = std::min(col_end_left - col_i - 1, col_end_right - col_right - 1);
-
-					col_start_left = max(col_i - left_half_range, 0);
-					col_end_left = min(col_i + right_half_range + 1, w - 1);
-
-					col_start_right = max(col_right - left_half_range, 0);
-					col_end_right = min(col_right + right_half_range + 1, w - 1);
-					
-					left_block = getBlock(left_image, row_start, row_end, col_start_left, col_end_left); 
-					right_block = getBlock(right_image, row_start, row_end, col_start_right, col_end_right); 
-
-					cv::absdiff(left_block, right_block, block_diff);
-					cv::Scalar sad_diff_array = cv::sum(block_diff);
-					total_sad_diff = sad_diff_array[0] + sad_diff_array[1] + sad_diff_array[2]; 
-					if (total_sad_diff < lowest_sad_diff)
-					{
-						lowest_sad_diff = total_sad_diff;
-						best_disparity = col_diff;
-					}
+					lowest_sad_diff = total_sad_diff;
+					best_disparity = col_diff;
 				}
 			}
 			disp_img_255.at<int>(row_i, col_i) = std::abs(255.0 - (int)255.0*(best_disparity-disparity_to_left)/disparity_range);
