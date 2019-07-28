@@ -53,7 +53,6 @@ int main( int argc, char* argv[] )
         return -1;
     }
     
-    // if (img1_color.rows > 1500)
     if (img1_color.rows > 700)
     {
     	float ratio = 0.5;
@@ -64,8 +63,6 @@ int main( int argc, char* argv[] )
 
     Mat img1, img2, disp;
 
-    // img1 = img1_color;
-    // img2 = img2_color;
     cvtColor(img1_color, img1, COLOR_BGR2GRAY);
     cvtColor(img2_color, img2, COLOR_BGR2GRAY);
 
@@ -74,15 +71,12 @@ int main( int argc, char* argv[] )
 	int h = left_image.rows, w = left_image.cols, nchannels = left_image.channels();
 	cout << "channels " << nchannels << endl;
 
-
     double min3, max3;
 
-	cv::Mat disp_img_255 = cv::Mat::zeros(left_image.rows, left_image.cols, CV_32S);//CV_32SC1
-	
+	cv::Mat disp_img_255 = cv::Mat::zeros(left_image.rows, left_image.cols, CV_32S);
 	cv::Mat disp_img_grouped = cv::Mat::zeros(left_image.rows, left_image.cols, CV_32S);
 
 	// set range to search from current pixel
-	// int disparity_to_left = -90, disparity_to_right = 40;  // erlier -256, -48
     int disparity_to_left = -170, disparity_to_right = 85;  // erlier -256, -48
 	int disparity_range = abs(disparity_to_right - disparity_to_left);
 	int half_block_size = 7; // earlier 21, 5, 11
@@ -163,6 +157,7 @@ int main( int argc, char* argv[] )
 	cv::FileStorage disp_file_grouped("dispmap_grouped.xml", cv::FileStorage::WRITE);
 	disp_file_grouped << "disp" << disp_img_grouped; // Write entire cv::Mat
 
+    // which disparity map to use - original or grouped values
 	// disp = disp_img_grouped;
 	disp = disp_img_255;
 
@@ -185,36 +180,15 @@ int main( int argc, char* argv[] )
 
     if (our_camera)
     {
-    	// baseline = 5.7; //web cam
-    	// focal_length = 413.69216919;  // web cam
-    	// // focal_length = 489.6895905;  // web cam
-    	// // focal_length = 594.95166016;  // web cam
-    	// // // web cam intrinsics
-	    // intrinsics << 413.69216919, 0.0, 369.60504179,
-	    //               0.0, 482.78549194, 242.59775176,
-	    //               0.0, 0.0, 1.0;
-
         baseline = 100; //web cam
     	focal_length = 930.04052734;  // web cam
-
-
-	    // intrinsics <<   1740.01245, 0.0, 779.601468,
-        //                 0.0, 1742.12231, 1138.81797,
-        //                 0.0, 0.0, 1.0;
-
-        //intrinsics << 1713.8958377182626, 0.0, 1168.6382298861342, 
-        ///0.0, 1716.5356058238715, 780.28009828959432, 
-        //0.0, 0.0, 1.0; 
 
         intrinsics <<   930.04052734, 0.0, 353.75734512,
                         0.0, 931.65527344, 633.84417384,
                         0.0, 0.0, 1.0;        
-
-
     }
     else   // if database images
     {
-
         focal_length = 3979.911;
         baseline = 193.001;
 
@@ -228,22 +202,9 @@ int main( int argc, char* argv[] )
     // // web cam intrinsics
     if (our_camera)
    	{
-	    // intrinsics2 << 565.68701172, 0.0, 319.80993603,
-	    //               0.0, 594.95166016, 234.68265936,
-	    //               0.0, 0.0, 1.0;
-
-        // intrinsics2 <<      1612.98267, 0.0, 778.885092,
-        //                     0.0, 1642.61304, 1083.29674,
-        //                     0.0, 0.0, 1.0;
-
-        // intrinsics2 <<      1708.9200093490208, 0.0, 1117.3724582861462,
-        //                     0.0, 1714.4720073759254, 751.34224661161397,
-        //                     0.0, 0.0, 1.0;
-   	
         intrinsics2 <<  903.25213623, 0.0, 384.93938592,
                         0.0, 896.62097168, 639.9703307,
                         0.0, 0.0, 1.0;
-
     } 
    	else  // if database images
    	{
@@ -257,7 +218,7 @@ int main( int argc, char* argv[] )
     double Q03 = -intrinsics(0, 2);
     double Q13 = -intrinsics(1, 2);
     double Q23 = focal_length;
-    double Q32 = -1.0 / baseline;
+    double Q32 = 1.0 / baseline;
     double Q33 = (intrinsics(0, 2) - intrinsics2(0, 2)) / baseline;
 
     
@@ -272,7 +233,7 @@ int main( int argc, char* argv[] )
         for(int j = 0; j < disp.cols; j++) {
             if(v.at(j) > 0) {
                 
-                double pw = 1.0 / (v.at(j) * Q32 + Q33);
+                double pw = 1.0 / (v.at(j) * Q32 - Q33);
                 double z = Q23 * pw;
                 double x = ((float)j + Q03) * pw;
                 double y = ((float)i + Q13) * pw;
